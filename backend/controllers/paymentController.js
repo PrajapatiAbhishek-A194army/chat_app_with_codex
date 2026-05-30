@@ -9,8 +9,17 @@ const {
 const { sendSubscriptionActivatedEmail } = require("../services/authEmailService");
 const User = require("../models/User");
 
-const getClientUrl = () =>
-  (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/+$/, "");
+const getClientUrl = (req) => {
+  // In single-service mode on Render, use the request origin
+  const origin = req.get("origin") || req.get("host");
+  if (origin && (process.env.NODE_ENV === "production" || origin.includes("render.com"))) {
+    const protocol = req.secure ? "https" : "http";
+    return `${protocol}://${origin}`;
+  }
+  
+  // Fallback for development or explicit CLIENT_URL
+  return (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/+$/, "");
+};
 
 const activeStatuses = ["active", "past_due", "trial"];
 
@@ -168,7 +177,7 @@ const createSession = async (req, res) => {
     const customerId = await getOrCreateCustomer(user);
 
     // 2. Define success and cancel URLs
-    const clientUrl = getClientUrl();
+    const clientUrl = getClientUrl(req);
     const successUrl = `${clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${clientUrl}/payment/cancel`;
 
