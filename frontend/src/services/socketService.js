@@ -1,10 +1,8 @@
 import { io } from "socket.io-client";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-
-const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL || API_BASE_URL.replace(/\/api\/?$/, "");
+// For single-service deployment, connect to the same origin
+// window.location.origin = current domain (e.g., https://app.render.com)
+const SOCKET_URL = window.location.origin;
 
 let socket = null;
 

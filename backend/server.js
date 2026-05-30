@@ -18,14 +18,13 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
-// Normalise CLIENT_URL to avoid trailing slash or protocol differences.
-// IMPORTANT: This must be http://localhost:3000 (not 127.0.0.1) in development.
-// Browsers treat them as different origins for cookie and CORS purposes.
+// For single-service deployment, allow requests from the same origin
+// In development (npm run dev), also allow localhost:3000
+const NODE_ENV = process.env.NODE_ENV || "development";
 const rawClientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
-
-// Build a de-duplicated list of allowed origins.
-// We always include http://localhost:3000 as a fallback for development.
-const allowedOrigins = [...new Set([rawClientUrl, "http://localhost:3000"])];
+const allowedOrigins = NODE_ENV === "production" 
+  ? [] // Production uses same origin only
+  : [...new Set([rawClientUrl, "http://localhost:3000"])];
 
 connectDB();
 
@@ -37,7 +36,9 @@ app.use(
         callback(null, true);
         return;
       }
-      if (allowedOrigins.includes(origin)) {
+      // In production (single-service), allow same-origin requests
+      // In development, allow localhost:3000
+      if (NODE_ENV === "production" || allowedOrigins.includes(origin)) {
         callback(null, true);
         return;
       }
@@ -69,6 +70,10 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
+// Serve frontend static files in production
+const frontendBuildPath = path.join(__dirname, "..", "frontend", "dist");
+app.use(express.static(frontendBuildPath));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/profile", profileRoutes);
@@ -90,11 +95,9 @@ app.get("/", async (req, res) => {
   }
 });
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found.",
-  });
+// Fallback: serve React's index.html for all non-API routes (SPA support)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendBuildPath, "index.html"));
 });
 
 app.use((error, req, res, next) => {

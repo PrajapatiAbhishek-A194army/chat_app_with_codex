@@ -1,11 +1,11 @@
 import axios from "axios";
 
-// Always use a fixed, explicit base URL.
-// NEVER derive from window.location.hostname — it can be 127.0.0.1 vs localhost
-// which causes cookie/CORS mismatches after external redirects (e.g. Stripe).
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+// Use relative URL for single-service deployment.
+// In production: requests go to /api/* on the same domain.
+// In development: Vite proxy might redirect to http://localhost:5000/api
+const API_BASE_URL = "/api";
 console.log("Using API base URL:", API_BASE_URL);
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Always send cookies with every request
