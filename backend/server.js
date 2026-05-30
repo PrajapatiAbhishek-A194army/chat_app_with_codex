@@ -111,4 +111,8 @@ initializeSocket(server, allowedOrigins);
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Allowed CORS origins: ${allowedOrigins.join(", ")}`);
+  console.log(
+  "Google Client ID:",
+  import.meta.env.VITE_GOOGLE_CLIENT_ID
+);
 });
