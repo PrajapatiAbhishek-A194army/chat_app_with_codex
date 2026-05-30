@@ -30,7 +30,11 @@ jobs:
 
       - name: Build Frontend
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/chatapp-frontend:latest ./frontend
+          docker build \
+          --build-arg VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
+          --build-arg VITE_GOOGLE_CLIENT_ID="${{ secrets.VITE_GOOGLE_CLIENT_ID }}" \
+          -t ${{ secrets.DOCKER_USERNAME }}/chatapp-frontend:latest \
+          ./frontend  
 
       - name: Push Frontend
         run: |
